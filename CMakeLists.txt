@@ -4,8 +4,9 @@ project(HDR_PLUS)
 set(CMAKE_CXX_STANDARD 11)
 #set(CMAKE_CXX_FLAGS "-O3 -v -g -Wall") # Use -DCMAKE_BUILD_TYPE=Release/Debug instead
 find_package(PNG REQUIRED)
+find_package(JPEG REQUIRED)
 
-set(HALIDE_ROOT_DIR "")
+set(HALIDE_ROOT_DIR "/opt/halide")
 
 if(" ${HALIDE_ROOT_DIR}" STREQUAL " ")
     message( FATAL_ERROR "Specify HALIDE_ROOT_DIR variable in the cmake file." )
@@ -33,4 +34,4 @@ link_directories(/usr/local/lib /usr/local/include ${HALIDE_ROOT_DIR}/bin ${HALI
 
 add_executable(hdrplus ${src_files})
 
-target_link_libraries(hdrplus Halide png ${LIBRAW_LIBRARY})
+target_link_libraries(hdrplus Halide png jpeg ${LIBRAW_LIBRARY})

@@ -1,10 +1,10 @@
 #include "Halide.h"
 #include "halide_load_raw.h"
-
+#include "halide_image_io.h"
 #include "Burst.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../include/stb_image_write.h"
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
+
 #include <stdio.h>
 #include "align.h"
 #include "merge.h"
@@ -56,25 +56,25 @@ public:
     /*
      * process -- Calls all of the main stages (align, merge, finish) of the pipeline.
      */
-    Buffer<uint8_t> process() {
+    Buffer<uint16_t> process() {
         Halide::Buffer<uint16_t> imgsBuffer(*imgs.raw_buffer());
 
         Func alignment = align(imgsBuffer);
         Func merged = merge(imgsBuffer, alignment);
-        Func finished = finish(merged, width, height, bp, wp, wb, c, g);
+        //Func finished = finish(merged, width, height, bp, wp, wb, c, g);
         
         ///////////////////////////////////////////////////////////////////////////
         // realize image
         ///////////////////////////////////////////////////////////////////////////
         
-        Buffer<uint8_t> output_img(3, width, height);
+        Buffer<uint16_t> output_img(width, height);
         
-        finished.realize(output_img);
+        merged.realize(output_img);
         
         // transpose to account for interleaved layout
         
-        output_img.transpose(0, 1);
-        output_img.transpose(1, 2);
+        //output_img.transpose(0, 1);
+        //output_img.transpose(1, 2);
         
         return output_img;
     }
@@ -82,12 +82,14 @@ public:
     /*
      * save_png -- Writes an interleaved Halide image to an output file.
      */
-    static bool save_png(std::string dir_path, std::string img_name, Buffer<uint8_t> &img) {
+    static bool save_png(std::string dir_path, std::string img_name, Buffer<uint16_t> &img) {
         
         std::string img_path = dir_path + "/" + img_name;
         
         std::remove(img_path.c_str());
-        
+
+        Halide::Tools::save_image(img, img_path);
+        /*
         int stride_in_bytes = img.width() * img.channels();
         
         if(!stbi_write_png(img_path.c_str(), img.width(), img.height(), img.channels(), img.data(), stride_in_bytes)) {
@@ -95,6 +97,7 @@ public:
             std::cerr << "Unable to write output image '" << img_name << "'" << std::endl;
             return false;
         }
+        */
         
         return true;
     }
@@ -159,7 +162,7 @@ int main(int argc, char* argv[]) {
         c,
         g);
 
-    Buffer<uint8_t> output = hdr_plus.process();
+    Buffer<uint16_t> output = hdr_plus.process();
     
     if(!HDRPlus::save_png(dir_path, out_name, output)) return -1;
 
